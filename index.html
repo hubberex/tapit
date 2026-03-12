@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>TAP IT</title>
+<!-- SECURITY FIX 1: Bunny Fonts is a GDPR-compliant, privacy-preserving drop-in
+     replacement for Google Fonts. No IP logging, no tracking, EU-hosted.
+     Self-hosting alternative: download from fontsource.org and serve locally. -->
+<link href="https://fonts.bunny.net/css2?family=nunito:wght@800;900&family=nunito-sans:wght@400;700;800&display=swap" rel="stylesheet">
+<!-- SECURITY FIX 2: Content Security Policy — restricts what resources the browser
+     will load, blocking injected scripts and unauthorised external connections. -->
+<meta http-equiv="Content-Security-Policy"
+  content="default-src 'self';
+           style-src 'self' 'unsafe-inline' https://fonts.bunny.net;
+           font-src 'self' https://fonts.bunny.net;
+           script-src 'self' 'unsafe-inline';
+           img-src 'self' data: https://counter.dev;
+           connect-src 'self' https://counter.dev;">
+<!-- Note: 'unsafe-inline' for style/script is needed because this is a single HTML file.
+     If you split into separate .css/.js files, remove 'unsafe-inline' and use nonces instead. -->
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; -webkit-tap-highlight-color: transparent; }
+
+/* Allow vertical scroll touch inside the how-to-play scroll container */
+.how-scroll, .how-scroll * { touch-action: pan-y; }
+.end-scroll, .end-scroll * { touch-action: pan-y; }
+
+:root {
+  --yellow: #FFFC00;
+  --black:  #000000;
+  --white:  #FFFFFF;
+  --gray:   #1C1C1C;
+  --gray2:  #2A2A2A;
+  --gray3:  #3D3D3D;
+  --muted:  #888;
+  --red:    #FF3B5C;
+  --green:  #34C759;
+  --blue:   #007AFF;
+}
+
+html, body {
+  width: 100%; height: 100dvh;
+  overflow: hidden;
+  background: var(--black);
+  color: var(--white);
+  font-family: 'Nunito Sans', sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ══ SCREEN SYSTEM ══ */
+.screen {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 100;
+  background: var(--black);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.screen.hidden { display: none; }
+.screen.slide-out { opacity: 0; transform: translateY(24px); pointer-events: none; }
+.screen.slide-in  { animation: slideIn .28s cubic-bezier(.22,1,.36,1) both; }
+@keyframes slideIn { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:none; } }
+
+/* ══ START SCREEN ══ */
+#s-start {
+  background: var(--yellow);
+  padding: 0 28px;
+  gap: 0;
+}
+
+.start-top {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.ghost-logo {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 900;
+  font-size: clamp(96px, 24vw, 148px);
+  color: var(--black);
+  line-height: 0.88;
+  letter-spacing: -5px;
+  text-align: center;
+}
+
+.ghost-dot {
+  display: inline-block;
+  width: 0.18em;
+  height: 0.18em;
+  background: var(--black);
+  border-radius: 50%;
+  margin-bottom: 0.12em;
+  vertical-align: middle;
+}
+
+.start-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,0.4);
+  margin-top: 14px;
+}
+
+.start-bottom {
+  width: 100%;
+  padding-bottom: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* CTA button */
+.cta {
+  width: 100%;
+  max-width: 360px;
+  background: var(--black);
+  color: var(--yellow);
+  border: none;
+  border-radius: 100px;
+  padding: 20px 0;
+  font-family: 'Nunito', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.1s;
+}
+.cta:active { transform: scale(0.96); opacity: 0.85; }
+
+.cta-ghost {
+  background: transparent;
+  color: rgba(0,0,0,0.45);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 12px 0;
+}
+
+/* ══ HOW TO PLAY ══ */
+#s-how {
+  background: var(--black);
+  justify-content: flex-start;
+  overflow: hidden;
+  padding: 0;
+}
+
+.how-scroll {
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px 24px 72px;
+  /* Allow natural scrolling on this element */
+  touch-action: pan-y;
+}
+
+.how-nav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+  padding-top: 8px;
+}
+
+.nav-back {
+  width: 42px; height: 42px;
+  background: var(--gray);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  transition: background 0.1s, transform 0.1s;
+  flex-shrink: 0;
+  border: none;
+  color: white;
+}
+.nav-back:active { background: var(--gray3); transform: scale(0.93); }
+
+.how-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 30px;
+  font-weight: 900;
+  color: var(--white);
+}
+
+/* Pill tag */
+.pill {
+  display: inline-block;
+  background: var(--yellow);
+  color: var(--black);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 100px;
+  margin-bottom: 18px;
+}
+
+/* How cards */
+.how-card {
+  background: var(--gray);
+  border-radius: 24px;
+  padding: 20px;
+  margin-bottom: 12px;
+}
+
+.how-card-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.how-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.how-row:last-child { margin-bottom: 0; }
+
+.how-ico {
+  width: 40px; height: 40px;
+  background: var(--gray2);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.how-body {
+  font-size: 14px;
+  color: #bbb;
+  line-height: 1.55;
+  padding-top: 8px;
+}
+.how-body strong { color: var(--white); }
+
+/* Zone rows */
+.zone-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--gray2);
+  border-radius: 14px;
+  margin-bottom: 8px;
+}
+.zone-item:last-child { margin-bottom: 0; }
+.zone-left { display: flex; align-items: center; gap: 10px; }
+.zdot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.zlbl { font-size: 14px; font-weight: 800; color: var(--white); }
+.zwhr { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.zpts { font-family: 'Nunito', sans-serif; font-size: 17px; font-weight: 900; }
+
+/* Tier rows */
+.tier-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  background: var(--gray2);
+  border-radius: 14px;
+  margin-bottom: 8px;
+}
+.tier-item:last-child { margin-bottom: 0; }
+.tier-ico  { font-size: 22px; }
+.tier-range { font-size: 14px; font-weight: 800; flex: 1; }
+.tier-lbl   { font-size: 12px; color: var(--muted); }
+
+/* Tip */
+.tip-card {
+  background: rgba(255,252,0,0.08);
+  border: 1.5px solid rgba(255,252,0,0.2);
+  border-radius: 20px;
+  padding: 16px 18px;
+  font-size: 14px;
+  color: #ccc;
+  line-height: 1.55;
+  margin-bottom: 12px;
+}
+.tip-card strong { color: var(--yellow); }
+
+/* Hard mode card */
+.hard-card {
+  background: linear-gradient(135deg, #1a0a00, #2a1000);
+  border: 1.5px solid rgba(255,59,92,0.25);
+  border-radius: 24px;
+  padding: 20px;
+  margin-bottom: 12px;
+}
+.hard-card-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--red);
+  margin-bottom: 6px;
+}
+.hard-card-text { font-size: 14px; color: #aaa; line-height: 1.5; }
+.hard-card-text strong { color: var(--white); }
+
+/* ══ HUD ══ */
+#hud {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  display: none;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 18px 22px 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.hstat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.hstat-lbl {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hstat-val {
+  font-family: 'Nunito', sans-serif;
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--white);
+}
+.hstat-val.y  { color: var(--yellow); }
+.hstat-val.g  { color: var(--green); }
+
+/* ══ GAME ARENA ══ */
+#game {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1;
+}
+#game.hidden { display: none; }
+
+#arena {
+  position: relative;
+  width: min(92vw, 82vh);
+  height: min(92vw, 82vh);
+}
+
+/* Target dot */
+.tdot {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  cursor: pointer;
+  animation: dotShrink var(--life) linear forwards;
+}
+
+/* Shrink ring indicator */
+.tdot::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 2.5px solid var(--yellow);
+  opacity: 0;
+  animation: timeRing var(--life) linear forwards;
+}
+
+@keyframes timeRing {
+  0%   { opacity: 0.6; transform: scale(1); }
+  80%  { opacity: 0.4; }
+  100% { opacity: 0;   transform: scale(0.5); }
+}
+
+@keyframes dotShrink {
+  0%   { transform: translate(-50%,-50%) scale(1);   opacity: 1; }
+  75%  { transform: translate(-50%,-50%) scale(1);   opacity: 1; }
+  100% { transform: translate(-50%,-50%) scale(0.1); opacity: 0; }
+}
+
+/* Pulse ring */
+.tdot::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  opacity: 0.35;
+  animation: pulseRing 0.9s ease-in-out infinite;
+}
+@keyframes pulseRing {
+  0%,100% { transform: scale(1);   opacity: 0.35; }
+  50%      { transform: scale(1.6); opacity: 0;   }
+}
+
+/* Burst */
+.burst {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%,-50%);
+  pointer-events: none;
+  z-index: 4;
+  animation: burstOut 0.4s ease-out forwards;
+}
+@keyframes burstOut {
+  0%   { transform: translate(-50%,-50%) scale(1);   opacity: 0.7; }
+  100% { transform: translate(-50%,-50%) scale(2.6); opacity: 0;   }
+}
+
+/* Score pop */
+.spop {
+  position: absolute;
+  font-family: 'Nunito', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  pointer-events: none;
+  z-index: 20;
+  transform: translate(-50%,-50%);
+  animation: popFloat 0.7s cubic-bezier(.22,1,.36,1) forwards;
+  white-space: nowrap;
+}
+@keyframes popFloat {
+  0%   { opacity:1; transform: translate(-50%,-50%) scale(1.15) translateY(0); }
+  60%  { opacity:1; }
+  100% { opacity:0; transform: translate(-50%,-50%) scale(0.85) translateY(-52px); }
+}
+
+/* Minus pop */
+.mpop {
+  position: absolute;
+  font-family: 'Nunito', sans-serif;
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--red);
+  pointer-events: none;
+  z-index: 20;
+  transform: translate(-50%,-50%);
+  animation: missFloat 0.6s ease forwards;
+  white-space: nowrap;
+}
+@keyframes missFloat {
+  0%   { opacity:1; transform: translate(-50%,-50%) scale(1) translateY(0); }
+  100% { opacity:0; transform: translate(-50%,-50%) scale(0.8) translateY(-36px); }
+}
+
+/* ══ MISS FLASH ══ */
+#miss-flash {
+  position: fixed; inset: 0;
+  background: var(--red);
+  opacity: 0; pointer-events: none; z-index: 50;
+}
+#miss-flash.go { animation: redFlash 0.22s ease forwards; }
+@keyframes redFlash { 0% { opacity:0.22; } 100% { opacity:0; } }
+
+/* ══ TIMER BAR ══ */
+#timer-wrap {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 6px;
+  background: var(--gray2);
+  z-index: 10;
+  display: none;
+}
+#timer-bar {
+  height: 100%;
+  width: 100%;
+  background: var(--yellow);
+  border-radius: 0 4px 4px 0;
+  transition: background 0.5s;
+}
+
+/* ══ COUNTDOWN ══ */
+#countdown {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 900;
+  font-size: clamp(110px, 32vw, 220px);
+  color: var(--yellow);
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(8px);
+  opacity: 0; pointer-events: none; z-index: 160;
+}
+#countdown.pop { opacity:1; animation: cntPop 0.32s cubic-bezier(.34,1.56,.64,1); }
+@keyframes cntPop {
+  from { transform: scale(1.7); opacity:0; }
+  to   { transform: scale(1);   opacity:1; }
+}
+
+/* ══ END SCREEN ══ */
+#s-end {
+  background: var(--black);
+  justify-content: flex-start;
+  overflow: hidden;
+  padding: 0;
+}
+
+.end-scroll {
+  width: 100%;
+  max-width: 420px;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 52px;
+  padding: 0 22px 52px;
+}
+
+/* Score hero */
+.end-hero {
+  width: calc(100% + 44px);
+  margin-left: -22px;
+  margin-right: -22px;
+  background: var(--yellow);
+  border-radius: 0 0 32px 32px;
+  padding: 44px 28px 32px;
+  text-align: center;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.end-score-lbl {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,0.4);
+  margin-bottom: 4px;
+}
+
+.end-score-val {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 900;
+  font-size: clamp(80px, 22vw, 130px);
+  color: var(--black);
+  line-height: 0.88;
+  margin-bottom: 8px;
+}
+
+.end-rank {
+  font-family: 'Nunito', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: rgba(0,0,0,0.6);
+}
+
+.record-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--black);
+  color: var(--yellow);
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 7px 18px;
+  border-radius: 100px;
+  margin-top: 12px;
+  animation: recordPop .4s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes recordPop { from { transform:scale(0); opacity:0; } to { transform:scale(1); opacity:1; } }
+
+/* Stat cards */
+.end-stats {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.end-stat {
+  flex: 1;
+  background: var(--gray);
+  border-radius: 20px;
+  padding: 16px 10px;
+  text-align: center;
+}
+.end-stat-v {
+  font-family: 'Nunito', sans-serif;
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--white);
+}
+.end-stat-v.y { color: var(--yellow); }
+.end-stat-v.g { color: var(--green); }
+.end-stat-l {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+/* Share card */
+.share-card {
+  width: 100%;
+  background: var(--gray);
+  border-radius: 24px;
+  padding: 18px 16px;
+  margin-bottom: 16px;
+}
+
+.share-card-lbl {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.share-grid   { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 8px; }
+.share-grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+
+.shr {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+  padding: 12px 6px 10px;
+  border-radius: 16px;
+  background: var(--gray2);
+  cursor: pointer;
+  transition: transform .12s, background .1s;
+  border: none;
+}
+.shr:active { transform: scale(0.88); background: var(--gray3); }
+.shr svg    { width: 28px; height: 28px; display: block; }
+.shr span   { font-size: 9px; font-weight: 800; letter-spacing: 0.5px; color: var(--muted); text-transform: uppercase; }
+
+/* End buttons */
+.end-btn {
+  width: 100%;
+  border: none;
+  border-radius: 100px;
+  padding: 19px 0;
+  font-family: 'Nunito', sans-serif;
+  font-size: 19px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform .1s, opacity .1s;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+}
+.end-btn:active { transform: scale(0.97); opacity: 0.85; }
+.end-btn.primary { background: var(--yellow); color: var(--black); }
+.end-btn.ghost   { background: var(--gray); color: var(--muted); font-size: 14px; letter-spacing: 2px; }
+
+/* ══ COPY TOAST ══ */
+#toast {
+  position: fixed;
+  bottom: 34px; left: 50%;
+  transform: translateX(-50%) translateY(18px);
+  background: var(--white);
+  color: var(--black);
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  padding: 12px 26px;
+  border-radius: 100px;
+  opacity: 0; pointer-events: none; z-index: 999;
+  transition: opacity .2s, transform .2s;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ══ COPYRIGHT FOOTER ══ */
+.copyright {
+  position: absolute;
+  bottom: 14px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: rgba(0,0,0,0.3);
+  pointer-events: none;
+}
+
+/* ══ VISITOR COUNTER ══ */
+.visitor-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.visitor-dot {
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: vdot 2s ease-in-out infinite;
+}
+
+@keyframes vdot {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+
+.visitor-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,0.4);
+}
+
+.visitor-count {
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  color: rgba(0,0,0,0.55);
+}</style>
+</head>
+<body>
+
+<div id="miss-flash"></div>
+<div id="countdown"></div>
+
+<!-- ══════════════════ START ══════════════════ -->
+<div id="s-start" class="screen slide-in">
+  <div class="start-top">
+    <div class="ghost-logo">TAP<br>IT<span class="ghost-dot"></span></div>
+    <div class="start-eyebrow">Miss and lose points</div>
+  </div>
+  <div class="start-bottom">
+    <!-- Visitor counter — fetched from counter.dev (privacy-friendly, no cookies) -->
+    <div class="visitor-strip">
+      <div class="visitor-dot"></div>
+      <span class="visitor-label">Players</span>
+      <span class="visitor-count" id="visit-count">—</span>
+    </div>
+    <button class="cta" id="btn-play">Let's Go 🎯</button>
+    <button class="cta cta-ghost" id="btn-how">How to Play</button>
+  </div>
+  <!-- Copyright — update YOUR NAME and year as needed -->
+  <div class="copyright">© 2025 Murmeldjuret · TAP IT · All rights reserved</div>
+</div>
+
+<!-- ══════════════════ HOW TO PLAY ══════════════════ -->
+<div id="s-how" class="screen hidden">
+  <div class="how-scroll">
+    <div class="how-nav">
+      <button class="nav-back" id="btn-how-back">←</button>
+      <div class="how-title">How to Play</div>
+    </div>
+
+    <div class="pill">Hard Mode Only</div>
+
+    <div class="hard-card">
+      <div class="hard-card-title">💀 The Rules</div>
+      <div class="hard-card-text">
+        You have <strong>10 seconds.</strong> A dot appears — tap it before it vanishes in <strong>1.2 seconds.</strong><br><br>
+        Hit the centre for max points. Miss completely and you <strong>lose 25 points.</strong> Go negative if you panic.
+      </div>
+    </div>
+
+    <div class="how-card">
+      <div class="how-card-label">Scoring Zones</div>
+      <div class="zone-item">
+        <div class="zone-left"><div class="zdot" style="background:#34C759"></div><div><div class="zlbl">Bullseye</div><div class="zwhr">Dead centre · 15%</div></div></div>
+        <div class="zpts" style="color:#34C759">+100</div>
+      </div>
+      <div class="zone-item">
+        <div class="zone-left"><div class="zdot" style="background:#FFFC00"></div><div><div class="zlbl">Inner</div><div class="zwhr">Very close · 30%</div></div></div>
+        <div class="zpts" style="color:#FFFC00">+75</div>
+      </div>
+      <div class="zone-item">
+        <div class="zone-left"><div class="zdot" style="background:#FF9F0A"></div><div><div class="zlbl">Middle</div><div class="zwhr">Half way · 50%</div></div></div>
+        <div class="zpts" style="color:#FF9F0A">+50</div>
+      </div>
+      <div class="zone-item">
+        <div class="zone-left"><div class="zdot" style="background:#FF6B00"></div><div><div class="zlbl">Outer</div><div class="zwhr">Near edge · 75%</div></div></div>
+        <div class="zpts" style="color:#FF6B00">+25</div>
+      </div>
+      <div class="zone-item">
+        <div class="zone-left"><div class="zdot" style="background:#FF3B5C"></div><div><div class="zlbl">Rim</div><div class="zwhr">Just inside · 100%</div></div></div>
+        <div class="zpts" style="color:#FF3B5C">+10</div>
+      </div>
+      <div class="zone-item" style="opacity:0.45; margin-bottom:0">
+        <div class="zone-left"><div class="zdot" style="background:#444"></div><div><div class="zlbl">Miss</div><div class="zwhr">Outside dot</div></div></div>
+        <div class="zpts" style="color:#FF3B5C">−25</div>
+      </div>
+    </div>
+
+    <div class="how-card">
+      <div class="how-card-label">Score Targets</div>
+      <div class="tier-item"><div class="tier-ico">😅</div><div class="tier-range">Under 300</div><div class="tier-lbl">Keep trying</div></div>
+      <div class="tier-item"><div class="tier-ico">👍</div><div class="tier-range">300–599</div><div class="tier-lbl">Not bad</div></div>
+      <div class="tier-item"><div class="tier-ico">🔥</div><div class="tier-range">600–899</div><div class="tier-lbl">You're good</div></div>
+      <div class="tier-item"><div class="tier-ico">⚡</div><div class="tier-range">900–1199</div><div class="tier-lbl">Seriously fast</div></div>
+      <div class="tier-item"><div class="tier-ico">👑</div><div class="tier-range">1200+</div><div class="tier-lbl">Legendary</div></div>
+    </div>
+
+    <div class="tip-card"><strong>PRO TIP —</strong> Accuracy beats speed. A bullseye is worth 10× a rim tap. Breathe, aim, tap.</div>
+
+    <button class="cta" style="max-width:100%;background:var(--yellow);color:var(--black);border-radius:100px;margin-top:4px;" id="btn-how-play">Play Now 🎯</button>
+  </div>
+</div>
+
+<!-- ══════════════════ HUD ══════════════════ -->
+<div id="hud">
+  <div class="hstat">
+    <div class="hstat-lbl">Score</div>
+    <div class="hstat-val g" id="hud-score">0</div>
+  </div>
+  <div class="hstat">
+    <div class="hstat-lbl">Best</div>
+    <div class="hstat-val y" id="hud-best">0</div>
+  </div>
+  <div class="hstat">
+    <div class="hstat-lbl">Taps</div>
+    <div class="hstat-val" id="hud-taps">0</div>
+  </div>
+</div>
+
+<!-- ══════════════════ GAME ══════════════════ -->
+<div id="game" class="hidden">
+  <div id="arena"></div>
+</div>
+
+<div id="timer-wrap"><div id="timer-bar"></div></div>
+
+<!-- ══════════════════ END ══════════════════ -->
+<div id="s-end" class="screen hidden">
+  <div class="end-scroll">
+    <div class="end-hero" id="end-hero">
+      <div class="end-score-lbl">Your Score</div>
+      <div class="end-score-val" id="end-score-val">0</div>
+      <div class="end-rank" id="end-rank-txt"></div>
+      <div class="record-pill" id="record-pill" style="display:none">🏆 New Record</div>
+    </div>
+    <div class="end-stats">
+      <div class="end-stat">
+        <div class="end-stat-v" id="end-taps">0</div>
+        <div class="end-stat-l">Taps</div>
+      </div>
+      <div class="end-stat">
+        <div class="end-stat-v g" id="end-acc">—</div>
+        <div class="end-stat-l">Accuracy</div>
+      </div>
+      <div class="end-stat">
+        <div class="end-stat-v y" id="end-best">0</div>
+        <div class="end-stat-l">Best</div>
+      </div>
+    </div>
+
+    <div class="share-card">
+      <div class="share-card-lbl">Challenge friends</div>
+      <div class="share-grid">
+        <div class="shr" id="sh-wa">
+          <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#25D366"/><path d="M23.5 8.5A10.4 10.4 0 007.1 21.9L6 26l4.2-1.1a10.4 10.4 0 0013.3-15.4z" fill="#25D366"/><path d="M23.5 8.5A10.4 10.4 0 007.1 21.9L6 26l4.2-1.1A10.4 10.4 0 0023.5 8.5zm-7.5 16a8.6 8.6 0 01-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.6 8.6 0 1116 24.5zm4.7-6.4c-.3-.1-1.6-.8-1.8-.9s-.4-.1-.6.1-.7.9-.8 1.1-.3.2-.6 0a7.3 7.3 0 01-2.1-1.3 8 8 0 01-1.5-1.8c-.1-.3 0-.4.1-.6l.4-.5.3-.5v-.5l-.9-2.1c-.2-.5-.5-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.8 11.9 11.9 0 004.5 4 5 5 0 003 .6 2.7 2.7 0 001.8-1.3 2.2 2.2 0 00.2-1.3c-.1-.1-.3-.2-.5-.3z" fill="#fff"/></svg>
+          <span>WhatsApp</span>
+        </div>
+        <div class="shr" id="sh-ig">
+          <svg viewBox="0 0 32 32" fill="none"><defs><radialGradient id="ig1" cx="30%" cy="107%" r="150%"><stop offset="0%" stop-color="#fdf497"/><stop offset="45%" stop-color="#fd5949"/><stop offset="60%" stop-color="#d6249f"/><stop offset="90%" stop-color="#285AEB"/></radialGradient></defs><rect width="32" height="32" rx="8" fill="url(#ig1)"/><rect x="6" y="6" width="20" height="20" rx="5.5" stroke="#fff" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="4.5" stroke="#fff" stroke-width="2" fill="none"/><circle cx="22" cy="10" r="1.2" fill="#fff"/></svg>
+          <span>Instagram</span>
+        </div>
+        <div class="shr" id="sh-x">
+          <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#000"/><path d="M18.24 14.9L24.6 8h-1.5l-5.52 6.06L13.18 8H8l6.67 9.72L8 24.5h1.5l5.83-6.4 4.66 6.4H25L18.24 14.9zm-2.07 2.27l-.68-.96-5.38-7.7H12.5l4.34 6.22.67.96 5.65 8.13h-2.38l-4.6-6.65z" fill="#fff"/></svg>
+          <span>X</span>
+        </div>
+        <div class="shr" id="sh-fb">
+          <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#1877F2"/><path d="M21.5 8h-3a5 5 0 00-5 5v2h-2v3h2v7h3v-7h2.5l.5-3H16.5v-2a2 2 0 012-2h2.5V8z" fill="#fff"/></svg>
+          <span>Facebook</span>
+        </div>
+      </div>
+      <div class="share-grid-3" style="margin-top:0">
+        <div class="shr" id="sh-sc">
+          <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#FFFC00"/><path d="M16 6c-2.8 0-5 2.1-5 5v1.8c-.4.1-.8.1-1.2 0-.3 0-.6.2-.6.5 0 .7.7 1.3 1.7 1.5-.2.5-.5 1-.9 1.4-1 1-2.1 1.3-2.1 2.1 0 .3.3.6.8.7.3.1.6.1.9.3.3.1.5.4.5.7 0 .3-.1.5-.1.8 0 .4.3.6.6.6.4 0 1-.2 2-.2s1.5.8 3.4.8 2.4-.8 3.4-.8 1.6.2 2 .2c.3 0 .6-.2.6-.6 0-.3-.1-.5-.1-.8 0-.3.2-.6.5-.7.3-.2.6-.2.9-.3.5-.1.8-.4.8-.7 0-.8-1.1-1.1-2.1-2.1-.4-.4-.7-.9-.9-1.4 1-.2 1.7-.8 1.7-1.5 0-.3-.3-.5-.6-.5-.4.1-.8.1-1.2 0V11c0-2.9-2.2-5-5-5z" fill="#000"/></svg>
+          <span>Snapchat</span>
+        </div>
+        <div class="shr" id="sh-ms">
+          <svg viewBox="0 0 32 32" fill="none"><defs><linearGradient id="mg1" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#0099FF"/><stop offset="100%" stop-color="#A033FF"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#mg1)"/><path d="M16 6C10.5 6 6 10.2 6 15.4c0 2.9 1.4 5.5 3.7 7.2V26l3.3-1.8c.9.2 1.9.3 3 .3 5.5 0 10-4.2 10-9.4S21.5 6 16 6zm1 12.6l-2.6-2.7-5 2.7 5.5-5.8 2.6 2.7 5-2.7-5.5 5.8z" fill="#fff"/></svg>
+          <span>Messenger</span>
+        </div>
+        <div class="shr" id="sh-copy">
+          <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#2A2A2A"/><rect x="9" y="12" width="12" height="13" rx="2.5" stroke="#FFFC00" stroke-width="2" fill="none"/><path d="M13 12V9.5A1.5 1.5 0 0114.5 8h8A1.5 1.5 0 0124 9.5v13a1.5 1.5 0 01-1.5 1.5H21" stroke="#FFFC00" stroke-width="2"/></svg>
+          <span>Copy</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="end-btn primary" id="btn-again">Play Again 🎯</button>
+    <button class="end-btn ghost"   id="btn-home">Home</button>
+  </div>
+</div>
+
+<div id="toast">✓ Copied!</div>
+
+<script>
+  /* ── Constants ── */
+  const GAME_MS  = 10000;
+  const DOT_LIFE = 1200;
+  const MISS_PEN = 25;
+  const SIZES    = [84, 66, 52, 40, 30];
+  const ZONES    = [
+    { p:.15, pts:100, col:'#34C759', lbl:'+100' },
+    { p:.30, pts:75,  col:'#FFFC00', lbl:'+75'  },
+    { p:.50, pts:50,  col:'#FF9F0A', lbl:'+50'  },
+    { p:.75, pts:25,  col:'#FF6B00', lbl:'+25'  },
+    { p:1.0, pts:10,  col:'#FF3B5C', lbl:'+10'  },
+  ];
+
+  /* ── State ── */
+  let score=0, taps=0, hits=0, best=0;
+  let active=false, timerStart, timerAF;
+  let dotEl=null, dotX=0, dotY=0, dotR=0, dotTO=null;
+
+  const $  = id => document.getElementById(id);
+  const sl = ms => new Promise(r=>setTimeout(r,ms));
+
+  /* ── Screen manager ── */
+  const SCREENS = ['s-start','s-how','s-end'];
+  function show(id) {
+    SCREENS.forEach(s => {
+      const el = $(s);
+      if (s === id) { el.classList.remove('hidden'); el.classList.add('slide-in'); }
+      else          { el.classList.add('hidden'); el.classList.remove('slide-in'); }
+    });
+    const inGame = (id === null);
+    // Keep HUD hidden — startGame reveals it only after countdown to prevent flicker
+    if (!inGame) $('hud').style.display = 'none';
+    $('game').classList.toggle('hidden', !inGame);
+    $('timer-wrap').style.display = inGame ? 'block' : 'none';
+  }
+
+  /* ── Dot ── */
+  function spawnDot() {
+    clearDot();
+    const sz  = SIZES[Math.floor(Math.random()*SIZES.length)];
+    const ar  = $('arena');
+    const pad = sz/2 + 10;
+    dotX = pad + Math.random()*(ar.offsetWidth  - pad*2);
+    dotY = pad + Math.random()*(ar.offsetHeight - pad*2);
+    dotR = sz/2;
+
+    const el = document.createElement('div');
+    el.className = 'tdot';
+    // colour cycles through yellow→orange→red as urgency grows
+    el.style.cssText = `left:${dotX}px;top:${dotY}px;width:${sz}px;height:${sz}px;background:#FFFC00;color:#FFFC00;box-shadow:0 0 24px rgba(255,252,0,0.5);--life:${DOT_LIFE}ms;`;
+    ar.appendChild(el);
+    dotEl = el;
+    dotTO = setTimeout(()=>{ if (!active) return; clearDot(); spawnDot(); }, DOT_LIFE);
+  }
+
+  function clearDot() {
+    if (dotTO) { clearTimeout(dotTO); dotTO=null; }
+    if (dotEl) { dotEl.remove(); dotEl=null; }
+  }
+
+  /* ── VFX ── */
+  function spawnBurst(x,y,sz,col) {
+    const el=document.createElement('div');
+    el.className='burst';
+    el.style.cssText=`left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;background:${col};`;
+    $('arena').appendChild(el);
+    el.addEventListener('animationend',()=>el.remove());
+  }
+
+  function spawnPop(x,y,txt,col,cls='spop') {
+    const el=document.createElement('div');
+    el.className=cls;
+    el.style.cssText=`left:${x}px;top:${y}px;color:${col}`;
+    el.textContent=txt;
+    $('arena').appendChild(el);
+    el.addEventListener('animationend',()=>el.remove());
+  }
+
+  function flashMiss() {
+    const f=$('miss-flash');
+    f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+  }
+
+  /* ── Tap handler ── */
+  function onTap(e) {
+    if (!active) return;
+    e.preventDefault();
+    const rect=$('arena').getBoundingClientRect();
+    const src=e.touches?e.touches[0]:e;
+    const cx=src.clientX-rect.left, cy=src.clientY-rect.top;
+
+    taps++; $('hud-taps').textContent=taps;
+    if (!dotEl) return;
+
+    const dx=cx-dotX, dy=cy-dotY;
+    const pct=Math.sqrt(dx*dx+dy*dy)/dotR;
+    const zone=ZONES.find(z=>pct<=z.p);
+
+    if (zone) {
+      hits++; score+=zone.pts;
+      spawnBurst(dotX,dotY,dotR*2,zone.col);
+      clearDot(); spawnPop(cx,cy,zone.lbl,zone.col);
+      setTimeout(spawnDot,80);
+    } else {
+      score=Math.max(0,score-MISS_PEN);
+      spawnPop(cx,cy,'−25','#FF3B5C','mpop');
+      flashMiss();
+    }
+
+    $('hud-score').textContent=score;
+    if (score>best) { best=score; $('hud-best').textContent=best; }
+  }
+
+  /* ── Timer ── */
+  function tick() {
+    const pct=Math.max(0,1-(performance.now()-timerStart)/GAME_MS);
+    const bar=$('timer-bar');
+    bar.style.width=(pct*100)+'%';
+    bar.style.background=pct<.15?'#34C759':pct<.35?'#FF9F0A':'#FFFC00';
+    if (pct>0) timerAF=requestAnimationFrame(tick);
+    else endGame();
+  }
+
+  /* ── Countdown ── */
+  async function countdown() {
+    const el=$('countdown');
+    for (const t of ['3','2','1','GO!']) {
+      el.textContent=t; el.classList.add('pop');
+      await sl(t==='GO!'?350:500);
+      el.classList.remove('pop'); await sl(60);
+    }
+  }
+
+  /* ── Game flow ── */
+  async function startGame() {
+    show(null);
+    score=0; taps=0; hits=0;
+    $('hud-score').textContent=0;
+    $('hud-taps').textContent=0;
+    $('hud-best').textContent=best;
+    $('timer-bar').style.width='100%';
+    $('timer-bar').style.background='#FFFC00';
+    $('arena').innerHTML='';
+    await countdown();
+    $('hud').style.display = 'flex'; // Show HUD only now — after countdown, no flicker
+    spawnDot();
+    active=true; timerStart=performance.now();
+    timerAF=requestAnimationFrame(tick);
+  }
+
+  function endGame() {
+    active=false; cancelAnimationFrame(timerAF); clearDot();
+    $('timer-bar').style.width='0%';
+
+    const acc  = taps>0?Math.round(hits/taps*100):0;
+    const isRec= score>0 && score>=best;
+    const rank = score>=1200?'👑 Legendary':score>=900?'⚡ Seriously fast':score>=600?'🔥 On fire':score>=300?'👍 Not bad':'😅 Keep trying';
+
+    $('end-score-val').textContent = score;
+    $('end-rank-txt').textContent  = rank;
+    $('end-taps').textContent      = taps;
+    $('end-acc').textContent       = acc+'%';
+    $('end-best').textContent      = best;
+    $('record-pill').style.display = isRec?'inline-flex':'none';
+
+    show('s-end');
+  }
+
+  /* ── Wiring ── */
+  $('btn-play').addEventListener('click', startGame);
+  $('btn-how').addEventListener('click',  ()=>show('s-how'));
+  $('btn-how-back').addEventListener('click', ()=>show('s-start'));
+  $('btn-how-play').addEventListener('click', startGame);
+  $('btn-again').addEventListener('click', startGame);
+  $('btn-home').addEventListener('click',  ()=>show('s-start'));
+
+  $('arena').addEventListener('click',      onTap);
+  $('arena').addEventListener('touchstart', onTap, {passive:false});
+
+  /* ── Share ── */
+  // SECURITY FIX 4: Use only origin + pathname — strips any query strings or
+  // hash fragments that could create ugly or manipulated share URLs.
+  const GAME_URL = window.location.origin + window.location.pathname;
+
+  function txt() {
+    const acc=taps>0?Math.round(hits/taps*100):0;
+    const rank=score>=1200?'👑 LEGENDARY':score>=900?'⚡ Seriously fast':score>=600?'🔥 On fire':score>=300?'👍 Not bad':'😅 Keep trying';
+    return `🎯 TAP IT · Hard Mode\nScore: ${score} · Accuracy: ${acc}% · ${taps} taps\n${rank} — can you beat me?\n`;
+  }
+
+  function native() {
+    if (navigator.share) { navigator.share({title:'TAP IT',text:txt(),url:GAME_URL}).catch(()=>{}); return true; }
+    return false;
+  }
+
+  function toast() {
+    const t=$('toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400);
+  }
+
+  // SECURITY FIX 6: Removed deprecated document.execCommand('copy') fallback.
+  // navigator.clipboard is supported in all modern browsers over HTTPS.
+  // If clipboard API is unavailable (non-HTTPS dev environment), fail silently.
+  function copy() {
+    const full = txt() + GAME_URL;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(full).then(toast).catch(()=>{});
+    } else {
+      // Not available without HTTPS — remind the user to serve over HTTPS in production
+      toast();
+    }
+  }
+
+  // SECURITY FIX 3: All window.open calls now include 'noopener,noreferrer' to prevent
+  // the opened tab from accessing window.opener and potentially redirecting this page.
+  $('sh-wa').addEventListener('click',   ()=>window.open(`https://wa.me/?text=${encodeURIComponent(txt()+GAME_URL)}`,'_blank','noopener,noreferrer'));
+  $('sh-ig').addEventListener('click',   ()=>{ if(!native()) copy(); });
+  $('sh-x').addEventListener('click',    ()=>window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(txt())}&url=${encodeURIComponent(GAME_URL)}`,'_blank','noopener,noreferrer'));
+  $('sh-fb').addEventListener('click',   ()=>window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(GAME_URL)}&quote=${encodeURIComponent(txt())}`,'_blank','noopener,noreferrer'));
+  $('sh-sc').addEventListener('click',   ()=>{ if(!native()) copy(); });
+  $('sh-ms').addEventListener('click',   ()=>{
+    const u=encodeURIComponent(GAME_URL);
+    window.open(`fb-messenger://share?link=${u}`,'_blank','noopener,noreferrer');
+    setTimeout(()=>window.open(`https://www.facebook.com/dialog/send?link=${u}&app_id=291494419107518&redirect_uri=${u}`,'_blank','noopener,noreferrer'),800);
+  });
+  $('sh-copy').addEventListener('click', copy);
+
+  /* ── Visitor Counter ──────────────────────────────────────────────────────
+     Uses counter.dev — open-source, privacy-first, no cookies, no personal
+     data collected. Free for up to 10k page views/month.
+
+     SETUP (one-time, takes 30 seconds):
+     1. Go to https://counter.dev and sign up with your email.
+     2. Add your site URL. You'll get a unique USER ID.
+     3. Replace YOUR_COUNTER_DEV_USER_ID below with your actual ID.
+
+     The pixel URL both records the visit AND lets us fetch the count.
+     ──────────────────────────────────────────────────────────────────────── */
+  const COUNTER_USER = 'YOUR_COUNTER_DEV_USER_ID'; // ← replace this
+
+  function loadVisitorCount() {
+    if (COUNTER_USER === 'YOUR_COUNTER_DEV_USER_ID') {
+      // Not configured yet — show a placeholder so the UI still looks good
+      $('visit-count').textContent = '—';
+      return;
+    }
+
+    // Record this visit + fetch count via the tracking pixel
+    const pixel = new Image();
+    pixel.src = `https://counter.dev/track?user=${encodeURIComponent(COUNTER_USER)}&referrer=${encodeURIComponent(GAME_URL)}`;
+
+    // Fetch the public count for display
+    fetch(`https://counter.dev/counter?user=${encodeURIComponent(COUNTER_USER)}`)
+      .then(r => r.text())
+      .then(count => {
+        const n = parseInt(count.trim(), 10);
+        if (!isNaN(n)) {
+          // Format nicely: 1000 → 1k, 10000 → 10k
+          $('visit-count').textContent = n >= 1000
+            ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'k'
+            : n.toString();
+        }
+      })
+      .catch(() => { $('visit-count').textContent = '—'; });
+  }
+
+  loadVisitorCount();
+</script>
+<!-- 100% privacy-first analytics -->
+<script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+
+</body>
+</html>
